@@ -5,7 +5,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 #matplotlib.use('TkAgg')
 
-#import Adafruit_DHT
+import Adafruit_DHT
 
 from PIL import ImageTk, Image
 from datetime import datetime
@@ -51,10 +51,10 @@ def exit():
 def raise_frame(frame):
 	"""Function for navigating to page."""
 	frame.tkraise()
-	if frame=='page_3':
-		# Regenerates graph
-		plot.clear_plot()
-		plot.update_plot()
+#	if frame=='page_3':
+#		# Regenerates graph
+#		plot.clear_plot()
+#		plot.update_plot()
 
 def clock():
 	"""Gets current time for the display."""
@@ -64,27 +64,27 @@ def clock():
 
 def get_temp():
 	"""Gets current temperature and humidity from sensor."""
-	root.after(2000, get_temp)
+	root.after(temp_interval, get_temp)
 	humidity, temperature = Adafruit_DHT.read_retry(22, 4)
 	temp = "{0:0.1f}".format(temperature)
 	indoor_temp_hist.append(temp)
-	if len(indoor_temp_hist) > 43200:
+	if len(indoor_temp_hist) > (86400/temp_interval):
 		indoor_temp_hist.pop(0)
 	temperature_in.set(temp + "°C")
 	hum = "{0:0.1f}".format(humidity)
 	# Make a sanity check on humidity to avoid crazy readings
-	if hum >= 0 and hum <= 100:
+	if float(hum) >= 0 and float(hum) <= 100:
 		indoor_hum_hist.append(hum)
-		if len(indoor_hum_hist) > 43200:
+		if len(indoor_hum_hist) > (86400/temp_interval):
 			indoor_hum_hist.pop(0)
 		humidity_in.set(hum + "%RH")
 
-#def plot_page(frame):
-#	global plot
-#	"""Activates plot page (3) and regenerates plot."""
-#	frame.tkraise()
-#	plot.clear_plot()
-#	plot.update_plot()
+def plot_page(frame):
+	global plot
+	"""Activates plot page (3) and regenerates plot."""
+	frame.tkraise()
+	plot.clear_plot()
+	plot.update_plot()
 
 
 # Definitions
@@ -96,6 +96,8 @@ main_font = "Dejavu Sans"
 
 indoor_temp_hist = []
 indoor_hum_hist = []
+
+temp_interval = 10000
 
 # TKinter
 root = tk.Tk()
@@ -127,7 +129,7 @@ button_2 = Button(master=back, image=forecast_icon, bg=menu_color,
 button_2.grid(row=0, column=1)
 
 button_3 = Button(master=back, image=history_icon, bg=menu_color, 
-	highlightbackground=highlight_color, command=lambda:raise_frame(page_3), 
+	highlightbackground=highlight_color, command=lambda:plot_page(page_3), 
 	width=250, height=80, padx=5, pady=3)
 button_3.grid(row=0, column=2)
 
@@ -235,6 +237,6 @@ raise_frame(page_1)
 plot = Generate_plot()
 # Read clock and sensors
 root.after(1000, clock)
-#root.after(2000, get_temp)
+root.after(temp_interval, get_temp)
 # Run main interface 
 root.mainloop()
